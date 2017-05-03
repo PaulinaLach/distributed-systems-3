@@ -4,7 +4,9 @@ import sys
 sys.path.append('../gen-py')
 # sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
+from bson.objectid import ObjectId
 from laboratory import LaboratoryService
+from laboratory.ttypes import Examination, ExamRecord
 from pymongo import MongoClient
 
 client = MongoClient()
@@ -24,7 +26,7 @@ class ExaminationHandler:
             "patient": patient_id,
             "date": exam_date,
             "doctor": doctor_to_order,
-            "records": exam_records
+            "records": list(map(lambda x: {'param': x.param, 'result': x.result, 'unit': x.unit}, exam_records))
         }
         examinations = db.examinations
         exam_id = examinations.insert_one(examination).inserted_id
@@ -34,20 +36,24 @@ class ExaminationHandler:
     def fill_results(self, exam_id):
         print("Results are ready.")
 
-        examination = db.examinations.find_one({"_id": exam_id})
-        exam_records = []
+        examination = db.examinations.find_one({"_id": ObjectId(exam_id)})
 
         for exam_record in examination["records"]:
-            record_to_append = {
-                "param_name": exam_record.param,
-                "result": str(random.uniform(1, 10)),
-                "unit": exam_record.unit,
-            }
-            exam_records.append(record_to_append)
+            exam_record["result"] = str(random.uniform(1, 10))
 
-        db.examinations.update_one({"_id": exam_id}, examination)
+        db.examinations.update_one({"_id": ObjectId(exam_id)}, examination)
 
         return True
+
+    def exam_json_to_record(self, examination):
+        e = Examination()
+        e.exam_id = str(examination['_id'])
+        e.doctor_to_order = examination['doctor']
+        e.exam_date = examination['date']
+        e.patient_id = examination['patient']
+        e.exam_records = list(
+            map(lambda x: ExamRecord(param=x['param'], result=x['result'], unit=x['unit']), examination['records']))
+        return e
 
     def list_results_doc(self, exam_id, param):
         print("List was sent to the doctor.")
@@ -55,13 +61,15 @@ class ExaminationHandler:
         results_list = []
 
         if exam_id == "None":
-            for examination in db.examinations:
-                for exam_record in examination["records"]:
-                    if exam_record["param_name"] == param:
-                        results_list.append(examination)
+            for examination in db.examinations.find():
+                for exam_record in examination['records']:
+                    if exam_record["param"] == param:
+                        e = self.exam_json_to_record(examination)
+                        results_list.append(e)
         else:
-            examination = db.examinations.find_one({"_id": exam_id})
-            results_list.append(examination)
+            examination = db.examinations.find_one({"_id": ObjectId(exam_id)})
+            if examination:
+                results_list.append(self.exam_json_to_record(examination))
 
         return results_list
 
@@ -70,9 +78,9 @@ class ExaminationHandler:
 
         results_list = []
 
-        for examination in db.examinations:
+        for examination in db.examinations.find():
             if examination["patient"] == patient_id:
-                results_list.append(examination)
+                results_list.append(self.exam_json_to_record(examination))
 
         return results_list
 

@@ -90,7 +90,7 @@ public class Doctor {
                     String exam_id = splittedLine[1];
                     String param = splittedLine[2];
 
-                    this.list_results_doc(exam_id, param);
+                    System.out.println(this.list_results_doc(exam_id, param));
 
                 }
 

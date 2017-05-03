@@ -50,7 +50,7 @@ public class Patient {
                     String [] splittedLine = line.split(" ");
                     String patient_id = splittedLine[1];
 
-                    this.list_results_pat(patient_id);
+                    System.out.println(this.list_results_pat(patient_id));
 
                 }
 
