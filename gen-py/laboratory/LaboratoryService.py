@@ -186,6 +186,8 @@ class Client(Iface):
         iprot.readMessageEnd()
         if result.success is not None:
             return result.success
+        if result.re is not None:
+            raise result.re
         raise TApplicationException(TApplicationException.MISSING_RESULT, "fill_results failed: unknown result")
 
 
@@ -280,6 +282,9 @@ class Processor(Iface, TProcessor):
             msg_type = TMessageType.REPLY
         except (TTransport.TTransportException, KeyboardInterrupt, SystemExit):
             raise
+        except RequestException as re:
+            msg_type = TMessageType.REPLY
+            result.re = re
         except Exception as ex:
             msg_type = TMessageType.EXCEPTION
             logging.exception(ex)
@@ -788,14 +793,17 @@ class fill_results_result(object):
     """
     Attributes:
      - success
+     - re
     """
 
     thrift_spec = (
         (0, TType.BOOL, 'success', None, None, ),  # 0
+        (1, TType.STRUCT, 're', (RequestException, RequestException.thrift_spec), None, ),  # 1
     )
 
-    def __init__(self, success=None,):
+    def __init__(self, success=None, re=None,):
         self.success = success
+        self.re = re
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -811,6 +819,12 @@ class fill_results_result(object):
                     self.success = iprot.readBool()
                 else:
                     iprot.skip(ftype)
+            elif fid == 1:
+                if ftype == TType.STRUCT:
+                    self.re = RequestException()
+                    self.re.read(iprot)
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -824,6 +838,10 @@ class fill_results_result(object):
         if self.success is not None:
             oprot.writeFieldBegin('success', TType.BOOL, 0)
             oprot.writeBool(self.success)
+            oprot.writeFieldEnd()
+        if self.re is not None:
+            oprot.writeFieldBegin('re', TType.STRUCT, 1)
+            self.re.write(oprot)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()

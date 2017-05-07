@@ -6,7 +6,7 @@ sys.path.append('../gen-py')
 
 from bson.objectid import ObjectId
 from laboratory import LaboratoryService
-from laboratory.ttypes import Examination, ExamRecord
+from laboratory.ttypes import Examination, ExamRecord, RequestException
 from pymongo import MongoClient
 
 client = MongoClient()
@@ -38,11 +38,16 @@ class ExaminationHandler:
 
         examination = db.examinations.find_one({"_id": ObjectId(exam_id)})
 
+        if not examination:
+            request_exception = RequestException()
+            request_exception.message = 'Requested examination does not exist.'
+            raise request_exception
+
         for exam_record in examination["records"]:
             exam_record["result"] = str(random.uniform(1, 10))
 
         db.examinations.update_one({"_id": ObjectId(exam_id)}, {'$set': examination})
-        print("################################")
+
         return True
 
     def exam_json_to_record(self, examination):

@@ -2,6 +2,7 @@ package clientside;
 
 import laboratory.Examination;
 import laboratory.LaboratoryService;
+import laboratory.RequestException;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
@@ -46,7 +47,7 @@ public class Technician {
                     String [] splittedLine = line.split(" ");
                     String exam_id = splittedLine[1];
 
-                    System.out.println(this.fill_results(exam_id));
+                    this.fill_results(exam_id);
 
                 }
 
@@ -57,9 +58,13 @@ public class Technician {
         }
     }
 
-    private boolean fill_results(String exam_id) throws TException {
+    private void fill_results(String exam_id) throws TException {
         System.out.println("Results filled.");
-        return this.client.fill_results(exam_id);
+        try {
+            this.client.fill_results(exam_id);
+        } catch (RequestException e) {
+            System.out.println("Result exc");
+        }
     }
 
     public static void main(String [] args) throws Exception {

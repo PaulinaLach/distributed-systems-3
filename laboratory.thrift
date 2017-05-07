@@ -3,14 +3,8 @@ namespace py laboratory
 
 typedef i32 int
 
-exception AuthorizationException {
-  1: int error_code,
-  2: string message,
-}
-
 exception RequestException {
-  1: int error_code,
-  2: string message,
+  1: string message,
 }
 
 struct ExamRecord {
@@ -36,5 +30,5 @@ service LaboratoryService {
   list<Examination> list_results_doc(1: string exam_id, 2: string param),
   list<Examination> list_results_pat(1: string patient_id),
   bool order_exam(1: string patient_id, 2: string exam_date, 3: string doctor_to_order, 4: list<ExamRecord> exam_records),
-  bool fill_results(1: string exam_id),
+  bool fill_results(1: string exam_id) throws (1: RequestException re),
 }
