@@ -4,6 +4,7 @@ import laboratory.ExamRecord;
 import laboratory.Examination;
 import laboratory.LaboratoryService;
 import org.apache.thrift.TException;
+import org.apache.thrift.async.AsyncMethodCallback;
 import org.apache.thrift.transport.TTransportException;
 
 import java.io.BufferedReader;
@@ -19,10 +20,12 @@ import java.util.Map;
 public class Doctor {
 
     LaboratoryService.Client client;
+    LaboratoryService.AsyncClient async_client;
 
     public Doctor() {
         try {
             this.client = new JavaClient().getClient();
+            this.async_client = new JavaAsyncClient().getClient();
         } catch (TTransportException e) {
             e.printStackTrace();
         }
@@ -90,7 +93,7 @@ public class Doctor {
                     String exam_id = splittedLine[1];
                     String param = splittedLine[2];
 
-                    System.out.println(this.list_results_doc(exam_id, param));
+                    this.list_results_doc(exam_id, param);
 
                 }
 
@@ -113,10 +116,19 @@ public class Doctor {
         return true;
     }
 
-
-    private List<Examination> list_results_doc(String exam_id, String param) throws TException {
+    private void list_results_doc(String exam_id, String param) throws TException {
         System.out.println("Search proceeded.");
-        return this.client.list_results_doc(exam_id, param);
+        this.async_client.list_results_doc(exam_id, param, new AsyncMethodCallback<List<Examination>>() {
+            @Override
+            public void onComplete(List<Examination> examinations) {
+                System.out.println(examinations);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                System.out.println(e);
+            }
+        });
     }
 
     public static void main(String [] args) throws Exception {

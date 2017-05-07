@@ -46,7 +46,7 @@ public class Technician {
                     String [] splittedLine = line.split(" ");
                     String exam_id = splittedLine[1];
 
-                    this.fill_results(exam_id);
+                    System.out.println(this.fill_results(exam_id));
 
                 }
 

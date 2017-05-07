@@ -41,8 +41,8 @@ class ExaminationHandler:
         for exam_record in examination["records"]:
             exam_record["result"] = str(random.uniform(1, 10))
 
-        db.examinations.update_one({"_id": ObjectId(exam_id)}, examination)
-
+        db.examinations.update_one({"_id": ObjectId(exam_id)}, {'$set': examination})
+        print("################################")
         return True
 
     def exam_json_to_record(self, examination):
